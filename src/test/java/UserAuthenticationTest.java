@@ -1,18 +1,28 @@
 import io.restassured.RestAssured;
-import io.restassured.http.ContentType;
 import models.LoginRequest; // <-- Importăm clasa POJO
-import org.hamcrest.Matcher;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
-import static org.hamcrest.Matchers.*; // <-- Import esențial pentru matchers!
+
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.notNullValue;
 
 public class UserAuthenticationTest extends BaseTest {
 
-    @Test
-    public void loginWithInvalidCredentialsFails() {
+    @DataProvider(name = "invalidLoginCredentialsProvider")
+    public Object[][] invalidLoginCredentialsProvider() {
+        return new Object[][] {
+                { "john1757442014378_doe1757442014378", "password123", "Invalid username or password" },
+                { "test.username", "5Zm7%hECD{@[", "Invalid username or password" },
+                { "", "", "Invalid username or password" }
+        };
+    }
+
+    @Test(dataProvider = "invalidLoginCredentialsProvider")
+    public void loginWithInvalidCredentialsFails(String username, String password, String expectedErrorMessage) {
         // 1. Creăm obiectul Java (POJO) care modelează body-ul
         LoginRequest loginRequestBody = new LoginRequest();
-        loginRequestBody.setUsername("email_invalid");
-        loginRequestBody.setPassword("parola_gresita");
+        loginRequestBody.setUsername(username);
+        loginRequestBody.setPassword(password);
 
         // Given
         RestAssured.given()
@@ -20,47 +30,44 @@ public class UserAuthenticationTest extends BaseTest {
                 .body(loginRequestBody) // <-- Aici se întâmplă magia!
                 // When
                 .when()
-                .post("/user/login.php")   //pana aici tine de request
+                .post("/user/login.php")
                 // Then
                 .then()
                 .assertThat()
-                .statusCode(401) // Ne așteptăm la 401 Unauthorized  // pana aici tine de raspuns
-                .body("message", equalTo("Invalid username or password"));
-
-        System.out.println("Intradevar, testul a trecut!");
+                .statusCode(401)
+                .body("message", equalTo(expectedErrorMessage)); // Ne așteptăm la 401 Unauthorized
+        System.out.println("Intr-adevar, testul a trecut. Logarea cu username " + "<<" + username + ">>" + " si parola " + "<<" + password +">>" + " a esuat, asa cum ne asteptam.");
     }
-
-
-
+    //    {
+//        "username": "jane232_doe2123",
+//            "password": "qazXSW@13"
+//    }
     @Test
-        public void loginWithValidCredentialsSucceeds() {
-            // Presupunem că acest utilizator există în baza de date de test
-            String userUsername = "jane232_doe2123";
-            String userPassword = "qazXSW@13";
+    public void loginWithValidCredentialsSucceeds() {
+        // Presupunem că acest utilizator există în baza de date de test
+        String username = "jane232_doe2123";
+        String userPassword = "qazXSW@13";
 
-            LoginRequest loginRequestBody = new LoginRequest();
-            loginRequestBody.setUsername(userUsername);
-            loginRequestBody.setPassword(userPassword);
+        LoginRequest loginRequestBody = new LoginRequest();
+        loginRequestBody.setUsername(username);
+        loginRequestBody.setPassword(userPassword);
 
+        String authToken = RestAssured.given()
+                .contentType("application/json")
+                .body(loginRequestBody)
+                .when()
+                .post("/user/login.php")
+                .then()
+                .assertThat()
+                .statusCode(200)
+                .contentType("application/json")
+                // Validăm conținutul body-ului
+                .body("message", equalTo("Login successful"))
+                .body("user.username", equalTo(username)) // Verificăm că datele sunt corecte
+                .body("token", notNullValue()) // Verificăm că token-ul există
+                .extract().path("token"); // <-- Aici extragem valoarea
 
-            String authToken = RestAssured.given() // Am declarat variabila authToken
-                    .contentType("application/json")
-                    .body(loginRequestBody)
-                    .when()
-                    .post("/user/login.php")
-                    .then()
-                    .assertThat()
-                    .statusCode(200)
-                    // Validăm conținutul body-ului
-                    .body("message", equalTo("Login successful"))
-                    .body("token", notNullValue()) // Verificăm că token-ul există
-                    .body("user.username", equalTo(userUsername)) // Verificăm că datele sunt corecte
-                    .body("token", notNullValue())
-                    .extract().path("token"); // <-- Aici extragem valoarea
-
-        // Acum putem folosi variabila 'authToken'
         System.out.println("Token extras: " + authToken);
-
     }
 
 }

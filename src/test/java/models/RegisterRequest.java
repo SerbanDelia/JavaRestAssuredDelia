@@ -2,17 +2,17 @@ package models;
 
 public class RegisterRequest {
 
-    private String firstName;
-    private String lastName;
+    private String first_name;
+    private String last_name;
     private String email;
     private String password;
 
-    public String getFirstName(){
-        return firstName;
+    public String getfirst_name(){
+        return first_name;
     }
 
-    public String getLastName(){
-        return lastName;
+    public String getlast_name(){
+        return last_name;
     }
 
     public String getEmail(){
@@ -23,12 +23,12 @@ public class RegisterRequest {
         return password;
     }
 
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
+    public void setFirstName(String first_name) {
+        this.first_name = first_name;
     }
 
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
+    public void setLastName(String last_name) {
+        this.last_name = last_name;
     }
 
     public void setEmail(String email) {
@@ -40,4 +40,3 @@ public class RegisterRequest {
     }
 
 }
-
